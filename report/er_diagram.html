@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RailReserve - Database ER Diagram & Relational Schema</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --primary: #0284c7;
+    --primary-dark: #0369a1;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 24px 20px;
+  }
+  .container {
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  header {
+    background: #0f172a;
+    color: white;
+    padding: 24px 32px;
+    border-radius: 14px;
+    margin-bottom: 24px;
+    border-left: 6px solid #38bdf8;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  }
+  header h1 { font-size: 28px; margin-bottom: 6px; font-weight: 700; }
+  header p { color: #94a3b8; font-size: 15px; }
+  .badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 12px;
+    margin-right: 8px;
+    background: #0369a1;
+    color: white;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    margin-bottom: 28px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  }
+  h2 {
+    font-size: 22px;
+    color: var(--primary-dark);
+    margin-bottom: 16px;
+    border-bottom: 2px solid #e0f2fe;
+    padding-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  /* Zoom & Diagram Controls */
+  .controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .btn-tool {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .btn-tool:hover {
+    background: #0284c7;
+    color: white;
+    border-color: #0284c7;
+  }
+  .zoom-level {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    min-width: 50px;
+    text-align: center;
+  }
+
+  .diagram-viewport {
+    width: 100%;
+    min-height: 800px;
+    max-height: 1100px;
+    overflow: auto;
+    background: #ffffff;
+    background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px);
+    background-size: 24px 24px;
+    border: 2px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 30px;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+  }
+
+  .diagram-wrapper {
+    transform-origin: top left;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 1500px;
+    display: inline-block;
+  }
+
+  .mermaid {
+    font-size: 16px !important;
+  }
+
+  /* Force Mermaid SVG styling to be enlarged and high contrast */
+  .mermaid svg {
+    max-width: none !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 750px;
+  }
+
+  .mermaid .er.entityBox {
+    stroke-width: 2px !important;
+  }
+
+  .mermaid .er.relationshipLine {
+    stroke-width: 2.5px !important;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 14px;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: #f1f5f9;
+    color: #334155;
+    font-weight: 600;
+  }
+  tr:hover { background: #f8fafc; }
+  .tag-pk {
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .tag-fk {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 18px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🚆 RailReserve - Database ER Diagram & Relational Model</h1>
+    <p>Comprehensive Entity-Relationship Model & 15 Relational Schemas designed for DBMS Lab Evaluation</p>
+    <span class="badge">15 Relational Tables</span>
+    <span class="badge" style="background:#059669;">3NF / BCNF Normalized</span>
+    <span class="badge" style="background:#d97706;">SQLite 3 Compliant</span>
+    <span class="badge" style="background:#7c3aed;">Enlarged High-Resolution View</span>
+  </header>
+
+  <!-- Visual ER Diagram -->
+  <section class="card">
+    <h2>
+      <span>1. Graphical Entity-Relationship (ER) Diagram</span>
+      <div class="controls">
+        <button class="btn-tool" onclick="zoomIn()" title="Enlarge Diagram">🔍 Zoom In (+)</button>
+        <button class="btn-tool" onclick="zoomOut()" title="Shrink Diagram">🔍 Zoom Out (-)</button>
+        <span class="zoom-level" id="zoomVal">120%</span>
+        <button class="btn-tool" onclick="resetZoom()" title="Reset to Default">↺ Reset</button>
+        <button class="btn-tool" onclick="fitWidth()" title="Fit Width">↔ Fit</button>
+      </div>
+    </h2>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">
+      <b>Tip:</b> Click <b>Zoom In (+)</b> to enlarge further, or scroll horizontally and vertically to navigate the full 15-entity schema with foreign key relationships.
+    </p>
+    
+    <div class="diagram-viewport" id="viewport">
+      <div class="diagram-wrapper" id="diagramWrapper">
+        <div class="mermaid" id="erDiagram">
+erDiagram
+    USERS ||--o{ BOOKINGS : "places (1:N)"
+    USERS ||--o{ PASSENGERS : "manages (1:N)"
+    USERS ||--o{ FEEDBACK : "submits (1:N)"
+    USERS ||--o{ NOTIFICATIONS : "receives (1:N)"
+
+    STATIONS ||--o{ TRAINS : "origin_of (1:N)"
+    STATIONS ||--o{ TRAINS : "destination_of (1:N)"
+    STATIONS ||--o{ TRAIN_STOPS : "halts_at (1:N)"
+    STATIONS ||--o{ TRAIN_LIVE_STATUS : "current_loc (1:N)"
+    STATIONS ||--o{ TRAIN_LIVE_STATUS : "next_loc (1:N)"
+    STATIONS ||--o{ TRAIN_LIVE_STATUS : "last_loc (1:N)"
+
+    TRAINS ||--o{ TRAIN_STOPS : "has_stops (1:N)"
+    TRAINS ||--o{ COACHES : "composed_of (1:N)"
+    TRAINS ||--o{ SEATS : "contains_seats (1:N)"
+    TRAINS ||--o{ TRAIN_RUNS : "scheduled_as (1:N)"
+    TRAINS ||--o{ BOOKINGS : "booked_for (1:N)"
+    TRAINS ||--o{ TRAIN_LIVE_STATUS : "tracked_in (1:N)"
+
+    COACH_CLASSES ||--o{ SEATS : "categorizes (1:N)"
+    COACHES ||--o{ SEATS : "accommodates (1:N)"
+
+    TRAIN_RUNS ||--o{ BOOKINGS : "operates_run (1:N)"
+    TRAIN_RUNS ||--o{ TICKETS : "valid_for_run (1:N)"
+    TRAIN_RUNS ||--o{ TRAIN_LIVE_STATUS : "monitored_run (1:N)"
+
+    BOOKINGS ||--o{ TICKETS : "issues (1:N)"
+    BOOKINGS ||--o{ PAYMENTS : "paid_via (1:N)"
+    BOOKINGS ||--o{ FEEDBACK : "reviewed_in (1:N)"
+
+    PASSENGERS ||--o{ TICKETS : "assigned_to (1:N)"
+    SEATS ||--o{ TICKETS : "allocated_to (1:N)"
+
+    USERS {
+        INTEGER user_id PK
+        VARCHAR name
+        VARCHAR email
+        VARCHAR phone
+        VARCHAR password
+        TIMESTAMP created_at
+    }
+
+    STATIONS {
+        INTEGER station_id PK
+        VARCHAR station_name
+        VARCHAR station_code
+        VARCHAR city
+        VARCHAR state
+    }
+
+    TRAINS {
+        INTEGER train_id PK
+        VARCHAR train_name
+        VARCHAR train_number
+        INTEGER source_station_id FK
+        INTEGER destination_station_id FK
+        VARCHAR running_days
+        INTEGER total_seats
+    }
+
+    TRAIN_STOPS {
+        INTEGER stop_id PK
+        INTEGER train_id FK
+        INTEGER station_id FK
+        INTEGER sequence_no
+        TIME arrival_time
+        TIME departure_time
+        INTEGER halt_duration
+        INTEGER distance_from_source
+    }
+
+    COACH_CLASSES {
+        INTEGER class_id PK
+        VARCHAR class_code
+        VARCHAR class_name
+        NUMERIC fare_per_km
+    }
+
+    COACHES {
+        INTEGER coach_id PK
+        INTEGER train_id FK
+        VARCHAR coach_number
+        INTEGER total_seats
+    }
+
+    SEATS {
+        INTEGER seat_id PK
+        INTEGER train_id FK
+        INTEGER coach_id FK
+        INTEGER class_id FK
+        VARCHAR seat_number
+        VARCHAR berth_type
+        NUMERIC fare_per_km
+    }
+
+    TRAIN_RUNS {
+        INTEGER run_id PK
+        INTEGER train_id FK
+        DATE run_date
+        DATE journey_date
+        VARCHAR source_station
+        VARCHAR destination_station
+    }
+
+    BOOKINGS {
+        INTEGER booking_id PK
+        INTEGER user_id FK
+        INTEGER train_id FK
+        INTEGER run_id FK
+        VARCHAR pnr
+        VARCHAR booking_status
+        TIMESTAMP booked_at
+    }
+
+    PASSENGERS {
+        INTEGER passenger_id PK
+        INTEGER user_id FK
+        VARCHAR name
+        INTEGER age
+        CHAR gender
+        VARCHAR id_proof_no
+    }
+
+    TICKETS {
+        INTEGER ticket_id PK
+        INTEGER pnr_id FK
+        INTEGER passenger_id FK
+        INTEGER run_id FK
+        INTEGER seat_id FK
+        NUMERIC fare
+        VARCHAR cancellation
+    }
+
+    PAYMENTS {
+        INTEGER payment_id PK
+        INTEGER pnr_id FK
+        NUMERIC amount
+        VARCHAR payment_mode
+        VARCHAR payment_status
+        VARCHAR transaction_ref
+    }
+
+    FEEDBACK {
+        INTEGER feedback_id PK
+        INTEGER pnr_id FK
+        INTEGER user_id FK
+        INTEGER rating
+        VARCHAR feedback_type
+        TEXT description
+    }
+
+    TRAIN_LIVE_STATUS {
+        INTEGER live_id PK
+        INTEGER train_id FK
+        INTEGER run_id FK
+        INTEGER current_station_id FK
+        INTEGER next_station_id FK
+        INTEGER last_station_id FK
+        INTEGER delay_minutes_next
+        VARCHAR current_status
+    }
+
+    NOTIFICATIONS {
+        INTEGER notification_id PK
+        INTEGER user_id FK
+        TEXT message
+        VARCHAR type
+        INTEGER is_read
+    }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Relational Tables Separately -->
+  <section class="card">
+    <h2>2. Individual Relational Tables (15 Tables)</h2>
+    <div class="grid-2">
+      
+      <!-- Table 1 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>1. USERS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Registered system users</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>user_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>name</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>email</td><td>VARCHAR(100)</td><td>UNIQUE</td></tr>
+          <tr><td>phone</td><td>VARCHAR(20)</td><td></td></tr>
+          <tr><td>password</td><td>VARCHAR(255)</td><td></td></tr>
+          <tr><td>created_at</td><td>TIMESTAMP</td><td></td></tr>
+        </table>
+      </div>
+
+      <!-- Table 2 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>2. STATIONS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Railway network stations</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>station_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>station_name</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>station_code</td><td>VARCHAR(10)</td><td>UNIQUE</td></tr>
+          <tr><td>city</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>state</td><td>VARCHAR(100)</td><td></td></tr>
+        </table>
+      </div>
+
+      <!-- Table 3 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>3. TRAINS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Master train details & routes</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>train_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>train_name</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>train_number</td><td>VARCHAR(20)</td><td>UNIQUE</td></tr>
+          <tr><td>source_station_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; stations</span></td></tr>
+          <tr><td>destination_station_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; stations</span></td></tr>
+          <tr><td>running_days</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>total_seats</td><td>INTEGER</td><td>DEFAULT 100</td></tr>
+        </table>
+      </div>
+
+      <!-- Table 4 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>4. TRAIN_STOPS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Intermediate halts and sequence numbers</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>stop_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>train_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; trains</span></td></tr>
+          <tr><td>station_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; stations</span></td></tr>
+          <tr><td>sequence_no</td><td>INTEGER</td><td>NOT NULL</td></tr>
+          <tr><td>arrival_time</td><td>TIME</td><td></td></tr>
+          <tr><td>departure_time</td><td>TIME</td><td></td></tr>
+          <tr><td>halt_duration</td><td>INTEGER</td><td>Minutes</td></tr>
+          <tr><td>distance_from_source</td><td>INTEGER</td><td>Km</td></tr>
+        </table>
+      </div>
+
+      <!-- Table 5 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>5. COACH_CLASSES</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Class tiers (SL, 3A, 2A, CC)</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>class_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>class_code</td><td>VARCHAR(10)</td><td>NOT NULL</td></tr>
+          <tr><td>class_name</td><td>VARCHAR(50)</td><td>NOT NULL</td></tr>
+          <tr><td>fare_per_km</td><td>NUMERIC(6,2)</td><td></td></tr>
+        </table>
+      </div>
+
+      <!-- Table 6 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>6. COACHES</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Train coach composition</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>coach_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>train_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; trains</span></td></tr>
+          <tr><td>coach_number</td><td>VARCHAR(20)</td><td>e.g. A1, B1</td></tr>
+          <tr><td>total_seats</td><td>INTEGER</td><td>DEFAULT 72</td></tr>
+        </table>
+      </div>
+
+      <!-- Table 7 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>7. SEATS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Physical seat inventory</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>seat_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>train_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; trains</span></td></tr>
+          <tr><td>coach_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; coaches</span></td></tr>
+          <tr><td>class_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; coach_classes</span></td></tr>
+          <tr><td>seat_number</td><td>VARCHAR(10)</td><td>NOT NULL</td></tr>
+          <tr><td>berth_type</td><td>VARCHAR(20)</td><td>'Seat'</td></tr>
+        </table>
+      </div>
+
+      <!-- Table 8 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>8. TRAIN_RUNS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Scheduled run instance by date</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>run_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>train_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; trains</span></td></tr>
+          <tr><td>run_date</td><td>DATE</td><td>NOT NULL</td></tr>
+          <tr><td>journey_date</td><td>DATE</td><td></td></tr>
+          <tr><td>source_station</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>destination_station</td><td>VARCHAR(100)</td><td></td></tr>
+        </table>
+      </div>
+
+      <!-- Table 9 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>9. BOOKINGS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Master booking order per PNR</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>booking_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>user_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; users</span></td></tr>
+          <tr><td>train_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; trains</span></td></tr>
+          <tr><td>run_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; train_runs</span></td></tr>
+          <tr><td>pnr</td><td>VARCHAR(20)</td><td>UNIQUE</td></tr>
+          <tr><td>booking_status</td><td>VARCHAR(20)</td><td>'Confirmed'</td></tr>
+        </table>
+      </div>
+
+      <!-- Table 10 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>10. PASSENGERS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Passenger profiles</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>passenger_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>user_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; users</span></td></tr>
+          <tr><td>name</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+          <tr><td>age</td><td>INTEGER</td><td></td></tr>
+          <tr><td>gender</td><td>CHAR(1)</td><td></td></tr>
+          <tr><td>id_proof_no</td><td>VARCHAR(50)</td><td></td></tr>
+        </table>
+      </div>
+
+      <!-- Table 11 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>11. TICKETS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Issued ticket per passenger and seat</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>ticket_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>pnr_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; bookings</span></td></tr>
+          <tr><td>passenger_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; passengers</span></td></tr>
+          <tr><td>run_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; train_runs</span></td></tr>
+          <tr><td>seat_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; seats</span></td></tr>
+          <tr><td>fare</td><td>NUMERIC(8,2)</td><td></td></tr>
+          <tr><td>cancellation</td><td>VARCHAR(20)</td><td></td></tr>
+        </table>
+      </div>
+
+      <!-- Table 12 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>12. PAYMENTS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Payment transactions</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>payment_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>pnr_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; bookings</span></td></tr>
+          <tr><td>amount</td><td>NUMERIC(8,2)</td><td></td></tr>
+          <tr><td>payment_mode</td><td>VARCHAR(50)</td><td>UPI/Demo</td></tr>
+          <tr><td>payment_status</td><td>VARCHAR(20)</td><td>'Paid'</td></tr>
+          <tr><td>transaction_ref</td><td>VARCHAR(100)</td><td></td></tr>
+        </table>
+      </div>
+
+      <!-- Table 13 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>13. FEEDBACK</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Train punctuality rating (1 to 5)</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>feedback_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>pnr_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; bookings</span></td></tr>
+          <tr><td>user_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; users</span></td></tr>
+          <tr><td>rating</td><td>INTEGER</td><td>CHECK(1-5)</td></tr>
+          <tr><td>description</td><td>TEXT</td><td></td></tr>
+        </table>
+      </div>
+
+      <!-- Table 14 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>14. TRAIN_LIVE_STATUS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">Real-time tracking and delays</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>live_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>train_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; trains</span></td></tr>
+          <tr><td>run_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; train_runs</span></td></tr>
+          <tr><td>current_station_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; stations</span></td></tr>
+          <tr><td>next_station_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; stations</span></td></tr>
+          <tr><td>last_station_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; stations</span></td></tr>
+          <tr><td>delay_minutes_next</td><td>INTEGER</td><td>DEFAULT 0</td></tr>
+          <tr><td>current_status</td><td>VARCHAR(100)</td><td></td></tr>
+        </table>
+      </div>
+
+      <!-- Table 15 -->
+      <div class="card" style="margin-bottom:0;">
+        <h3>15. NOTIFICATIONS</h3>
+        <p style="font-size:12px;color:var(--text-muted);">User booking & alert messages</p>
+        <table>
+          <tr><th>Column</th><th>Type</th><th>Key</th></tr>
+          <tr><td>notification_id</td><td>INTEGER</td><td><span class="tag-pk">PK</span></td></tr>
+          <tr><td>user_id</td><td>INTEGER</td><td><span class="tag-fk">FK &rarr; users</span></td></tr>
+          <tr><td>message</td><td>TEXT</td><td>NOT NULL</td></tr>
+          <tr><td>type</td><td>VARCHAR(50)</td><td>'info'</td></tr>
+          <tr><td>is_read</td><td>INTEGER</td><td>DEFAULT 0</td></tr>
+        </table>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<script>
+  // Initialize Mermaid with larger font sizes and non-shrinking width
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    er: {
+      useMaxWidth: false,
+      fontSize: 16
+    }
+  });
+
+  let currentScale = 1.2;
+
+  function updateZoom() {
+    const wrapper = document.getElementById('diagramWrapper');
+    wrapper.style.transform = `scale(${currentScale})`;
+    document.getElementById('zoomVal').textContent = `${Math.round(currentScale * 100)}%`;
+  }
+
+  function zoomIn() {
+    if (currentScale < 2.5) {
+      currentScale += 0.15;
+      updateZoom();
+    }
+  }
+
+  function zoomOut() {
+    if (currentScale > 0.6) {
+      currentScale -= 0.15;
+      updateZoom();
+    }
+  }
+
+  function resetZoom() {
+    currentScale = 1.2;
+    updateZoom();
+  }
+
+  function fitWidth() {
+    const viewport = document.getElementById('viewport');
+    const wrapper = document.getElementById('diagramWrapper');
+    const scale = (viewport.clientWidth - 60) / 1600;
+    currentScale = Math.max(0.6, Math.min(1.5, scale));
+    updateZoom();
+  }
+
+  // Initial application of default enlarged zoom on page load
+  window.addEventListener('DOMContentLoaded', () => {
+    updateZoom();
+  });
+</script>
+</body>
+</html>

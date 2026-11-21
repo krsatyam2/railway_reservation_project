@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RailReserve - Railway Reservation System</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <div class="container">
+    <h1>🚆 RailReserve</h1>
+    <nav>
+      <a href="#" onclick="show('home')">Home</a>
+      <a href="#" onclick="show('book')">Book Ticket</a>
+      <a href="#" onclick="show('status')">Live Status</a>
+      <a href="#" onclick="show('pnr')">PNR Enquiry</a>
+      <a href="#" onclick="openFeedbackModal()" title="Rate your train journey">⭐ Rate Journey</a>
+      <a href="#" id="nav-mybookings" onclick="show('mybookings')" style="display:none">My Bookings</a>
+      <div id="nav-auth-container" style="display:inline-flex;align-items:center;margin-left:6px;gap:8px;">
+        <button id="nav-login-btn" class="nav-btn" onclick="show('auth')">Login / Register</button>
+        <span id="nav-user-info" style="display:none;align-items:center;gap:6px;">
+          <span class="user-pill" onclick="show('auth')" title="View profile & account in SQLite">👤 <span id="nav-user-name">User</span></span>
+          <button id="nav-logout-btn" class="nav-btn logout" onclick="logout()">Logout</button>
+        </span>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <!-- Home -->
+  <section id="home" class="card">
+    <h2>Welcome to RailReserve</h2>
+    <p>A comprehensive Railway Reservation Management System built with Flask, SQLite, and Real-time RailRadar.in API integration.</p>
+    
+    <div id="home-user-banner" class="user-banner" style="margin:16px 0;"></div>
+
+    <div style="display:flex;gap:12px;margin:14px 0;flex-wrap:wrap;">
+      <span class="badge live" style="font-size:12px;padding:6px 12px">⚡ RailRadar.in Live API: Connected</span>
+      <span class="badge db" style="font-size:12px;padding:6px 12px">💾 Local SQLite Database Fallback: Ready</span>
+      <span class="badge db" style="font-size:12px;padding:6px 12px">🔑 Local User Auth: SQLite `users` table</span>
+      <span class="status-badge ok" style="font-size:12px;padding:6px 12px">✔ 15 Relational Tables Connected</span>
+    </div>
+    <h3 style="margin-top:20px">Relational Database Tables:</h3>
+    <div class="tag-list">
+      <span class="tag">users</span>
+      <span class="tag">stations</span>
+      <span class="tag">trains</span>
+      <span class="tag">train_stops</span>
+      <span class="tag">coach_classes</span>
+      <span class="tag">coaches</span>
+      <span class="tag">seats</span>
+      <span class="tag">train_runs</span>
+      <span class="tag">bookings</span>
+      <span class="tag">passengers</span>
+      <span class="tag">tickets</span>
+      <span class="tag">payments</span>
+      <span class="tag">feedback</span>
+      <span class="tag">train_live_status</span>
+      <span class="tag">notifications</span>
+    </div>
+  </section>
+
+  <!-- Book Ticket -->
+  <section id="book" class="card" style="display:none">
+    <h2>Book a Ticket</h2>
+    <div id="book-auth-banner" class="user-banner" style="margin-bottom:14px;"></div>
+    <div class="row">
+      <div><label>From Station</label><select id="bsrc" required></select></div>
+      <div><label>To Station</label><select id="bdest" required></select></div>
+      <div><label>Journey Date</label><input type="date" id="bdate" required></div>
+      <div class="full"><button class="btn" onclick="searchTrains()">Search Trains</button></div>
+    </div>
+    <div id="trainlist"></div>
+
+    <div id="bookingform" class="card" style="display:none;margin-top:20px">
+      <h3>Passenger Details <span id="btraininfo"></span></h3>
+      <form id="bookform" onsubmit="return bookTicket(event)">
+        <div class="row">
+          <div><label>Passenger Name</label><input type="text" id="pname" required placeholder="Full Name"></div>
+          <div><label>Age</label><input type="number" id="page" required min="1" max="120" value="25"></div>
+          <div><label>Gender</label><select id="pgen"><option value="M">Male (M)</option><option value="F">Female (F)</option><option value="O">Other (O)</option></select></div>
+        </div>
+        <div class="row">
+          <div><label>Phone Number</label><input type="tel" id="pphone" required placeholder="10-digit mobile" value="9876543210"></div>
+          <div><label>Email Address</label><input type="email" id="pemail" placeholder="email@example.com" value="passenger@example.com"></div>
+          <div><label>ID Proof Number</label><input type="text" id="pid" placeholder="e.g. Aadhaar / PAN" value="XXXX-XXXX-1234"></div>
+        </div>
+        <input type="hidden" id="btrain_id">
+        <input type="hidden" id="brun_id">
+        <button class="btn" type="submit" style="margin-top:8px">Confirm & Book Ticket</button>
+      </form>
+    </div>
+    <div id="bookresult" style="margin-top:16px"></div>
+  </section>
+
+  <!-- Live Status -->
+  <section id="status" class="card" style="display:none">
+    <h2>Live Train Status</h2>
+    <p style="font-size:13px;color:#64748b;margin-top:-10px;margin-bottom:14px">Real-time GPS tracking powered by RailRadar.in API with local database fallback.</p>
+    <div class="row">
+      <div><label>Train Number</label><input type="text" id="tnum" placeholder="e.g. 12301, 12001, 04070"></div>
+      <div class="full"><button class="btn" onclick="checkStatus()">Check Live Status</button></div>
+    </div>
+    <div id="statusresult"></div>
+    <div id="train-reviews-box" style="display:none;margin-top:20px;">
+      <h3 style="display:flex;align-items:center;gap:8px;">
+        <span>💬 Passenger Reviews & Ratings</span>
+        <span id="train-reviews-count" class="badge db" style="font-size:12px;"></span>
+      </h3>
+      <div id="train-reviews-list"></div>
+    </div>
+  </section>
+
+  <!-- PNR Enquiry -->
+  <section id="pnr" class="card" style="display:none">
+    <h2>PNR Status Enquiry</h2>
+    <div class="row">
+      <div><label>Enter 10-Character PNR Number</label><input type="text" id="pnrinput" placeholder="e.g. RR63210813"></div>
+      <div class="full"><button class="btn" onclick="checkPnr()">Get Booking Details</button></div>
+    </div>
+    <div id="pnrresult"></div>
+  </section>
+
+  <!-- My Bookings (Authenticated Users) -->
+  <section id="mybookings" class="card" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <h2 style="border-bottom:none;margin-bottom:0;padding-bottom:0;">My Bookings & Reservations</h2>
+      <button class="btn" style="padding:6px 14px;font-size:13px;" onclick="loadMyBookings()">🔄 Refresh List</button>
+    </div>
+    <p style="font-size:13px;color:#64748b;margin-top:0;margin-bottom:14px">
+      Relational query: <code>SELECT * FROM bookings JOIN tickets JOIN trains WHERE user_id = ?</code>
+    </p>
+    <div id="mybookings-list"></div>
+  </section>
+
+  <!-- DBMS Lab Authentication Section -->
+  <section id="auth" class="card" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <h2 style="border-bottom:none;margin-bottom:0;padding-bottom:0;">Local Demonstration Auth (DBMS Lab)</h2>
+      <span class="badge db" style="font-size:12px;padding:6px 12px;">💾 Local SQLite Storage (users table)</span>
+    </div>
+    <p style="font-size:13px;color:#64748b;margin-top:6px;margin-bottom:18px;">
+      No external/outsourced auth or cloud databases needed. Credentials and session tokens are authenticated directly against your local <code>database.sqlite</code> file using Flask's secure session cookies.
+    </p>
+
+    <!-- Profile View for Authenticated User -->
+    <div id="auth-logged-in-box" style="display:none;">
+      <div class="result" style="border-left:4px solid #10b981;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 style="margin:0;color:#0f172a;">👤 Active SQLite User Session</h3>
+          <span class="status-badge ok">Authenticated</span>
+        </div>
+        <div style="margin-top:10px;line-height:1.9;">
+          <b>User ID (Primary Key):</b> <code id="profile-uid" style="font-weight:700;color:#0284c7;"></code><br>
+          <b>Full Name:</b> <span id="profile-name"></span><br>
+          <b>Email Address:</b> <span id="profile-email"></span><br>
+          <b>Phone Number:</b> <span id="profile-phone"></span><br>
+          <b>Account Created At:</b> <span id="profile-created"></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn" onclick="show('mybookings')">View My Bookings</button>
+        <button class="btn" onclick="show('book')">Book a Ticket</button>
+        <button class="btn secondary" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Forms View (Login / Register Tabs) -->
+    <div id="auth-forms-box">
+      <div class="auth-tabs">
+        <button id="tab-login-btn" class="tab-btn active" onclick="switchAuthTab('login')">Sign In</button>
+        <button id="tab-reg-btn" class="tab-btn" onclick="switchAuthTab('register')">Create Account (Sign Up)</button>
+      </div>
+
+      <!-- Sign In Tab -->
+      <div id="tab-login">
+        <form onsubmit="return handleLogin(event)">
+          <div class="row">
+            <div>
+              <label>Email Address or Mobile</label>
+              <input type="text" id="login-email" required placeholder="e.g. demo@rail.in">
+            </div>
+            <div>
+              <label>Password</label>
+              <input type="password" id="login-password" required placeholder="Enter password">
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;">
+            <button class="btn" type="submit">Sign In</button>
+            <button type="button" class="btn secondary" onclick="fillDemoCredentials()">⚡ Fill Demo Account (demo@rail.in / demo123)</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Sign Up Tab -->
+      <div id="tab-register" style="display:none;">
+        <form onsubmit="return handleRegister(event)">
+          <div class="row">
+            <div>
+              <label>Full Name</label>
+              <input type="text" id="reg-name" required placeholder="e.g. Kush Sharma">
+            </div>
+            <div>
+              <label>Email Address</label>
+              <input type="email" id="reg-email" required placeholder="e.g. kush@demo.com">
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label>Mobile Number</label>
+              <input type="tel" id="reg-phone" placeholder="e.g. 9876543210">
+            </div>
+            <div>
+              <label>Password</label>
+              <input type="password" id="reg-password" required minlength="4" placeholder="At least 4 characters">
+            </div>
+          </div>
+          <p style="font-size:12px;color:#64748b;margin-top:4px;margin-bottom:12px;">
+            🔒 Passwords are stored in local <code>users.password</code> and hashed with PBKDF2/scrypt before writing to SQLite.
+          </p>
+          <button class="btn" type="submit">Create Account & Sign In</button>
+        </form>
+      </div>
+
+      <div id="auth-alert"></div>
+    </div>
+  </section>
+</main>
+
+<!-- Universal Feedback & Rating Modal -->
+<div id="feedback-modal" class="modal-backdrop" style="display:none;" onclick="handleModalBackdropClick(event)">
+  <div class="modal-card card" onclick="event.stopPropagation()">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid #e2e8f0;padding-bottom:10px;">
+      <h3 style="margin:0;font-size:18px;color:#0f172a;display:flex;align-items:center;gap:6px;">
+        <span>⭐ Rate Train Journey</span>
+      </h3>
+      <button class="modal-close-btn" type="button" onclick="closeFeedbackModal()">&times;</button>
+    </div>
+    <p style="font-size:13px;color:#64748b;margin-top:0;margin-bottom:14px;">
+      Your rating directly calculates this train's precision and passenger score in SQLite (<code>feedback</code> table).
+    </p>
+
+    <form id="feedback-form" onsubmit="return submitFeedbackForm(event)">
+      <div class="row">
+        <div>
+          <label>PNR or Train Number</label>
+          <input type="text" id="fb-pnr" required placeholder="e.g. RR63210813 or 12301" style="text-transform:uppercase;">
+        </div>
+        <div>
+          <label>Train Information</label>
+          <input type="text" id="fb-train-info" readonly style="background:#f8fafc;color:#475569;" value="Selected Train">
+        </div>
+      </div>
+
+      <div style="margin:14px 0;">
+        <label style="margin-bottom:4px;">Star Rating (1 to 5 Stars)</label>
+        <div class="stars" id="modal-stars" style="display:flex;gap:8px;font-size:32px;cursor:pointer;"></div>
+        <span id="star-desc" style="font-size:13px;font-weight:600;color:#f59e0b;">5 - Excellent</span>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Feedback Category</label>
+          <select id="fb-type">
+            <option value="Overall Experience">Overall Experience</option>
+            <option value="Punctuality & Precision">Punctuality & Precision</option>
+            <option value="Cleanliness & Hygiene">Cleanliness & Hygiene</option>
+            <option value="Seat Comfort">Seat Comfort</option>
+            <option value="Food & Catering">Food & Catering</option>
+            <option value="Staff Behavior">Staff Behavior</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;">
+        <label>Passenger Comments / Review (Optional)</label>
+        <textarea id="fb-comment" rows="3" placeholder="Share your experience about train arrival, delays, cleanliness, or staff punctuality..."></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:14px;align-items:center;">
+        <button class="btn" type="submit" id="fb-submit-btn">Submit Journey Rating</button>
+        <button type="button" class="btn secondary" onclick="closeFeedbackModal()" style="margin:0;">Cancel</button>
+      </div>
+    </form>
+
+    <div id="modal-feedback-alert" style="margin-top:14px;"></div>
+  </div>
+</div>
+<script src="/static/app.js"></script>
+</body>
+</html>
